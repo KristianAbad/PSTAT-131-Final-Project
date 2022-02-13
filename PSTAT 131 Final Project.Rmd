@@ -1,0 +1,21 @@
+---
+title: "Song Data Project"
+author: "Kristian Abad, Steven Truong, Nicole Magallanes"
+date: "2/13/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)
+library(tidyr)
+```
+
+```{r}
+data = read_csv("song_data.csv")
+head(data)
+```
+
