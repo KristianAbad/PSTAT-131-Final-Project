@@ -12,10 +12,41 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(readr)
 library(tidyr)
+library(tidyverse)
 ```
-
+# Preprocessing
 ```{r}
 data = read_csv("song_data.csv")
 head(data)
 ```
+One challenge we need to figure out is addressing the following cases in our data, if there are any:\
+
+* Remixes
+* Remasters
+* Single Versions
+* Same name but different artists?
+\
+I think maybe we can leave remixes possibly treating them as reimaginings of songs or somewhat to the same vein that songs have samples from other tracks are in themselves a separate track. Maybe the more difficult is dealing with the other cases. An example that comes to mind is "Smooth Operator" by Sade (seems like only one of the 3 versions is in the data). There's a single version, a remastered version, and I believe an album version where there's an immediate difference between the remastered and album version.
+\
+I think the duplicated() function finds exact duplicates of rows.
+```{r}
+duplicates <- data[duplicated(data),]
+duplicates
+```
+Just testing some cases here...while scrolling through on kaggle, I just picked a random duplicate song to test
+```{r}
+
+duplicates %>%
+  filter(song_name == 'Zombie')
+```
+Here's an interesting case where we have 2 of the same rows and 1 with a remix with a track called "8 Letters"
+```{r}
+duplicates %>%
+  filter(song_name == '8 Letters')
+
+duplicates %>%
+  filter(song_name == '8 Letters - R3HAB Remix')
+```
+So it looks like it just picks up exact duplicates and we'll need to figure out what we're going to do with other cases.
+
 
