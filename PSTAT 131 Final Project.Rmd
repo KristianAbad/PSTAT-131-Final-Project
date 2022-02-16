@@ -48,5 +48,19 @@ duplicates %>%
   filter(song_name == '8 Letters - R3HAB Remix')
 ```
 So it looks like it just picks up exact duplicates and we'll need to figure out what we're going to do with other cases.
+```{r}
+data_2 <- data[!duplicated(data),]
+nrow(data)
+nrow(data_2)
+
+nrow(data) - nrow(data_2)
+```
+Using the grepl function to find any instance of single and remastered versions of tracks. 
+```{r}
+#Function was found via stackoverflow
+#https://stackoverflow.com/questions/10128617/test-if-characters-are-in-a-string
+data_2[grepl('Single',data_2$song_name,fixed=TRUE) | grepl('Remaster',data_2$song_name,fixed=TRUE),]
+```
+
 
 
