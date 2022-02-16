@@ -72,12 +72,17 @@ Checking for missing values
 data_3[is.na(data_3)]
 ```
 ```{r}
-data_3[grepl('Mix',data_3$song_name,fixed=TRUE) | 
-       grepl('Version',data_3$song_name,fixed=TRUE),]
+#data_3[grepl('Swimming Pools (Drank)',data_3$song_name,fixed=TRUE),]
+
+
+#This is the only entry for this song in the dataset
+#data_3[grepl("Wouldn't It Be Nice",data_3$song_name,fixed=TRUE),]
+#nrow(data_3)
+data_4 <- data_3[!(grepl('Mix',data_3$song_name,fixed=TRUE) | 
+       grepl('Version',data_3$song_name,fixed=TRUE)),]
+data_4
 ```
-```{r}
-data_3[grepl('Swimming Pools (Drank)',data_3$song_name,fixed=TRUE),]
-```
+
 
 
 
