@@ -26,6 +26,8 @@ One challenge we need to figure out is addressing the following cases in our dat
 * Single Versions
 * Same name but different artists?
 * Radio edits
+* Extended versions
+* Misc mixes/versions
 \
 I think maybe we can leave remixes possibly treating them as reimaginings of songs or somewhat to the same vein that songs have samples from other tracks are in themselves a separate track. Maybe the more difficult is dealing with the other cases. An example that comes to mind is "Smooth Operator" by Sade (seems like only one of the 3 versions is in the data). There's a single version, a remastered version, and I believe an album version where there's an immediate difference between the remastered and album version.
 \
@@ -60,10 +62,21 @@ Using the grepl function to find any instance of single,remastered, and radio ed
 ```{r}
 #Function was found via stackoverflow
 #https://stackoverflow.com/questions/10128617/test-if-characters-are-in-a-string
-data_2[grepl('Single',data_2$song_name,fixed=TRUE) |
-       grepl('Remaster',data_2$song_name,fixed=TRUE) |
-         grepl('Radio',data_2$song_name,fixed=TRUE),]
-
+data_3 <- data_2[!(grepl('Single',data_2$song_name,fixed=TRUE) |
+                 grepl('Remaster',data_2$song_name,fixed=TRUE) |
+                 grepl('Radio',data_2$song_name,fixed=TRUE)),]
+data_3
+```
+Checking for missing values
+```{r}
+data_3[is.na(data_3)]
+```
+```{r}
+data_3[grepl('Mix',data_3$song_name,fixed=TRUE) | 
+       grepl('Version',data_3$song_name,fixed=TRUE),]
+```
+```{r}
+data_3[grepl('Swimming Pools (Drank)',data_3$song_name,fixed=TRUE),]
 ```
 
 
