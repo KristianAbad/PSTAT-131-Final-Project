@@ -83,6 +83,17 @@ data_4 <- data_3[!(grepl('Mix',data_3$song_name,fixed=TRUE) |
 data_4
 ```
 
+# Train/Test Split
+
+```{r}
+set.seed(131)
+train = sample(1:nrow(data_4), 11240)
+music.train = data_4[train,]
+music.test = data_4[-train,]
+
+nrow(music.train)
+nrow(music.test)
+```
 
 
 
