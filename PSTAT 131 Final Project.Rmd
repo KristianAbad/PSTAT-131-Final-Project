@@ -94,6 +94,12 @@ music.test = data_4[-train,]
 nrow(music.train)
 nrow(music.test)
 ```
+```{r}
+plot(music.train$danceability,music.train$song_popularity)
+```
+```{r}
+plot(music.train$energy,music.train$song_popularity)
+```
 
 
 
