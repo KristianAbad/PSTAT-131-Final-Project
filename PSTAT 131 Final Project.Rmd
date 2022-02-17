@@ -109,7 +109,7 @@ set.seed(131)
 #Perform bagging/random forest
 #Currently getting this error "Error in xj[i] : invalid subscript type 'list'"
 bag.music <- randomForest(song_popularity ~ . , data = data_4, mtry=ncol(data_4),
-                          importance=TRUE,subset=as.vector(music.train) )
+                          importance=TRUE,subset=train)
 bag.music
 
 ```
