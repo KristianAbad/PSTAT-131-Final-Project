@@ -9,6 +9,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ```{r}
 library(readr)
 library(tidyr)
@@ -97,8 +98,27 @@ nrow(music.train)
 nrow(music.test)
 ```
 
+```{r}
+
+#library("rsample")
+
+#music.split = data_4 %>%
+#  initial_split(prop = 0.8, strata = "song_popularity")
+
+#music.train = training(music.split)
+#music.test = testing(music.split)
+
+
+```
+
+
+
+
+
+
 #EDA
 
+#Linear Regression
 ```{r}
 
 ggplot(music.train, aes(song_popularity)) +
@@ -116,57 +136,131 @@ Since we do not have any categorical value, we have to observed each characteris
 
 ```{r}
 plot(music.train$acousticness, music.train$song_popularity)
-plot(lm(music.train$song_popularity~music.train$acousticness))
-
+mod_acc = lm(music.train$song_popularity~music.train$acousticness) 
+summary(mod_acc)
+plot(mod_acc)
 ```
 
 ```{r}
 plot(music.train$danceability, music.train$song_popularity)
-plot(lm(music.train$song_popularity~music.train$danceability))
+mod_dance = lm(music.train$song_popularity~music.train$danceability)
+summary(mod_dance)
+plot(mod_dance)
 ```
 ```{r}
 plot(music.train$energy, music.train$song_popularity)
-plot(lm(music.train$song_popularity~music.train$energy))
+mod_energy = lm(music.train$song_popularity~music.train$energy)
+summary(mod_energy)
+plot(mod_energy)
 ```
 ```{r}
 plot(music.train$instrumentalness, music.train$song_popularity)
-plot(lm(music.train$song_popularity~music.train$instrumentalness))
+mod_instr = lm(music.train$song_popularity~music.train$instrumentalness)
+summary(mod_instr)
+plot(mod_instr)
 ```
 ```{r}
 plot(music.train$key, music.train$song_popularity)
-plot(lm(music.train$song_popularity~music.train$key))
+mod_key = lm(music.train$song_popularity~music.train$key)
+summary(mod_key)
+plot(mod_key)
 ```
 ```{r}
 plot(music.train$liveness, music.train$song_popularity)
-plot(lm(music.train$song_popularity~music.train$liveness))
+mod_liveness = lm(music.train$song_popularity~music.train$liveness)
+summary(mod_liveness)
+plot(mod_liveness)
 ```
 ```{r}
 plot(music.train$loudness, music.train$song_popularity)
-plot(lm(music.train$song_popularity ~ music.train$loudness))
+mod_loud = lm(music.train$song_popularity ~ music.train$loudness)
+summary(mod_loud)
+plot(mod_loud)
 ```
 ```{r}
 plot(music.train$speechiness, music.train$song_popularity)
-plot(lm(music.train$song_popularity~music.train$speechiness))
+mod_speech = lm(music.train$song_popularity~music.train$speechiness)
+summary(mod_speech)
+plot(mod_speech)
 ```
 ```{r}
 plot(music.train$tempo, music.train$song_popularity)
-plot(lm(music.train$song_popularity~music.train$tempo))
+mod_tempo = lm(music.train$song_popularity~music.train$tempo)
+summary(mod_tempo)
+plot(mod_tempo)
+```
+We built a linear model for each individual characteristics compared to the song popularity. If we were to look at the p-value of 0.05 significant level then we see that speech, key, and energy is not significant to affect the song popularity if we cannot reject null hypothesis. Now, we will built a linear model with all the significant characteristics to see if the significant of the character changes when combined with other characteristics.
+
+```{r}
+
+mod_all = lm(music.train$song_popularity ~ music.train$acousticness + music.train$danceability + music.train$instrumentalness + music.train$liveness + music.train$loudness + music.train$tempo + music.train$energy + music.train$key + music.train$speechiness)
+
+summary(mod_all)
+
+
+```
+After building a model that take into consideration of all the characteristics, we see that key and speechiness is still not significant to the variation of the song popularity at a 0.05 significant level. However, we see that energy is now significant to the variation of the song popularity at a 0.05 significant level. Now, we will built a new linear model where it would only take into consideration of characteristics that is significant in the variation of song popularity (take out speechiness and key).
+
+
+```{r}
+FinalLinearMod = lm(music.train$song_popularity ~ music.train$acousticness + music.train$danceability + music.train$instrumentalness + music.train$liveness + music.train$loudness + music.train$tempo + music.train$energy)
+
+summary(FinalLinearMod)
+AIC(FinalLinearMod)
+BIC(FinalLinearMod)
+```
+
+From this we can establish the relationship between the predictors/characteristics and response in the mathematical formula:
+
+Popularity = 61.278308 + -3.052667*acousticness + 3.706776*danceability + -6.152911*instrumentalness + -4.754466*liveness + 0.430241*loudness + -0.017345*tempo + -11.106924*energy
+
+
+From this model, we see that danceability and the y intercept is the only positive numbers that increase the value of popularity. However, we see from the data set that loudness is measured in a negative values, so it also technically a positive number that would increased the value of popularity. For the other predictors, if the value is too high, then it would decrease the value of popularity.
+
+
+However, we noticed that our R-squared and adjusted squared value is relatively low, which might indicate that our independent variable is not explaining much in variation of our dependent variable. The model also have a high value of AIC and BIC
+
+#Predicting Linear Models
+
+```{r}
+
+PopularityPredict = predict(FinalLinearMod, music.test)
+
+PopularityPredict
+
+ggplot(music.train, aes(PopularityPredict)) +
+  geom_histogram(bins = 70, color = "white") +
+  labs(
+    title = "Histogram of Song Popularity Prediction"
+  )
+```
+We see that the prediction of song is mostly around 50 out of 100, which is a less than our our plot of data from earlier where most of the score is around 50 to 60 out of 100
+
+
+
+```{r}
+
+different_pred = data.frame(cbind(actuals = music.test$song_popularity, predicteds = PopularityPredict))
+correlation_accuracy = cor(different_pred)
+correlation_accuracy
+
+```
+We see that our predicted values and the test values have a very low correlation accuracy with a 0.1% accuracy. Now we will try to find the Mean Absolite Percentage Error (MAPE)
+
+```{r}
+
+mape = mean(abs((different_pred$predicteds - different_pred$actuals))/different_pred$actuals)
+different_pred
+mape
+
 ```
 
 
+```{r}
+mape <- mean(abs((different_pred$predicteds - different_pred$actuals))/different_pred$actuals)
+mape
 
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
 
 
