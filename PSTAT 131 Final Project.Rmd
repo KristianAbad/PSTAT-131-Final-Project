@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readr)
 library(tidyr)
 library(tidyverse)
+library(ggplot2)
+library(dplyr)
 ```
 # Preprocessing
 ```{r}
@@ -100,6 +102,79 @@ plot(music.train$danceability,music.train$song_popularity)
 ```{r}
 plot(music.train$energy,music.train$song_popularity)
 ```
+
+#EDA
+
+```{r}
+
+ggplot(music.train, aes(song_popularity)) +
+  geom_histogram(bins = 70, color = "white") +
+  labs(
+    title = "Histogram of Song Popularity"
+  )
+
+
+```
+From this, we observed that most song popularity are rated in the middle where the scores are around 50 to 60. We also see that not many songs get a score above a score of 90/100. We see that there a lot more songs that are rated low popularity. We will now continue to observe the different characteristics of musics to see any relationship between it and the song's popularity.
+
+Since we do not have any categorical value, we have to observed each characteristics individually against the song popularity
+
+
+```{r}
+plot(music.train$acousticness, music.train$song_popularity)
+plot(lm(music.train$song_popularity~music.train$acousticness))
+
+```
+
+```{r}
+plot(music.train$danceability, music.train$song_popularity)
+plot(lm(music.train$song_popularity~music.train$danceability))
+```
+```{r}
+plot(music.train$energy, music.train$song_popularity)
+plot(lm(music.train$song_popularity~music.train$energy))
+```
+```{r}
+plot(music.train$instrumentalness, music.train$song_popularity)
+plot(lm(music.train$song_popularity~music.train$instrumentalness))
+```
+```{r}
+plot(music.train$key, music.train$song_popularity)
+plot(lm(music.train$song_popularity~music.train$key))
+```
+```{r}
+plot(music.train$liveness, music.train$song_popularity)
+plot(lm(music.train$song_popularity~music.train$liveness))
+```
+```{r}
+plot(music.train$loudness, music.train$song_popularity)
+plot(lm(music.train$song_popularity ~ music.train$loudness))
+```
+```{r}
+plot(music.train$speechiness, music.train$song_popularity)
+plot(lm(music.train$song_popularity~music.train$speechiness))
+```
+```{r}
+plot(music.train$tempo, music.train$song_popularity)
+plot(lm(music.train$song_popularity~music.train$tempo))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
