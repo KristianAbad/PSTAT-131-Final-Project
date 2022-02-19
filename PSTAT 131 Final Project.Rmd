@@ -139,7 +139,35 @@ plot(yhat.rf, music.test.Y)
 abline (0, 1)
 mean((yhat.rf - music.test.Y)^2)
 ```
+```{r}
+set.seed(131)
+#Here we create a random forest where we let mtry = 6
+rf.music2 <- randomForest(song_popularity ~ . , mtry = 6,data = data_4,
+                          importance=TRUE,subset=train)
+rf.music2
+```
 
+```{r}
+yhat.rf2 <- predict(rf.music2 , newdata = data_4[-train,])
+
+plot(yhat.rf2, music.test.Y)
+abline (0, 1)
+mean((yhat.rf2 - music.test.Y)^2)
+```
+
+With the MSE being more or less the same for bagging as it is in random forest, we will proceed to other methods.
+
+```{r}
+importance(rf.music)
+```
+```{r}
+varImpPlot(bag.music)
+varImpPlot(rf.music)
+varImpPlot(rf.music2)
+```
+Based off these plots we see the MSE increase with certain variables compared to others, namely, energy, instrumentalness, loudness, acousticness, audio_valence, and danceability.
+
+# Boosted trees
 
 
 
