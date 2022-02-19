@@ -169,8 +169,57 @@ Based off these plots we see the MSE increase with certain variables compared to
 
 # Boosted trees
 
+```{r}
+library(gbm)
+```
+
+```{r}
+set.seed(131)
+boost.music <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
+                   distribution = "gaussian", 
+                   n.trees=5000,
+                   interaction.depth = 4)
+```
+
+```{r}
+summary(boost.music)
+```
+We see the most important variables according to the boosted model is loudness, tempo, and song duration in milliseconds. Let's take a look at the partial dependence for these 3 variables:
+```{r}
+plot(boost.music, i = 'loudness')
+plot(boost.music, i = 'tempo') 
+plot(boost.music, i = 'song_duration_ms')
+```
 
 
+```{r}
+yhat.boost <- predict(boost.music , newdata = data_4[-train,],n.trees = 5000)
+plot(yhat.boost, music.test.Y)
+abline (0, 1)
+mean((yhat.boost - music.test.Y)^2)
+```
+
+```{r}
+boost.music2 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
+                   distribution = "gaussian", 
+                   n.trees=5000,
+                   interaction.depth = 4,
+                   shrinkage = 0.2, verbose = F)
+yhat.boost2 <- predict(boost.music2 , newdata = data_4[-train,],n.trees = 5000)
+mean((yhat.boost2 - music.test.Y)^2)
+```
+Hmmm it seems our MSE is increasing with the past 2 models, let's try tuning the shrinkage parameter and see if that helps. Here we'll try $\lambda = 0.001$
+
+```{r}
+boost.music3 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
+                   distribution = "gaussian", 
+                   n.trees=5000,
+                   interaction.depth = 4,
+                   shrinkage = 0.001, verbose = F)
+yhat.boost3 <- predict(boost.music3 , newdata = data_4[-train,],n.trees = 5000)
+mean((yhat.boost3 - music.test.Y)^2)
+```
+We got an improvement for the MSE that relative to the other boosted trees is big but is still high.
 
 
 
