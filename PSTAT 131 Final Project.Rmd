@@ -16,6 +16,7 @@ library(tidyr)
 library(tidyverse)
 library(ggplot2)
 library(dplyr)
+library(glmnet)
 ```
 # Preprocessing
 ```{r}
@@ -208,7 +209,14 @@ FinalLinearMod = lm(music.train$song_popularity ~ music.train$acousticness + mus
 summary(FinalLinearMod)
 AIC(FinalLinearMod)
 BIC(FinalLinearMod)
+
 ```
+
+```{r}
+mse = mean(FinalLinearMod$residuals^2)
+mse
+```
+
 
 From this we can establish the relationship between the predictors/characteristics and response in the mathematical formula:
 
@@ -262,7 +270,130 @@ mape
 
 ```
 
+#Variation of Linear Regression
+
+#Rigdge Regression
+
+```{r}
+
+set.seed(1)
+train = sample(1:nrow(data_4), nrow(data_4)/2)
+test = (-train)
+
+x = model.matrix(song_popularity ~ acousticness + danceability + instrumentalness + liveness + loudness + tempo + energy + key + speechiness, data_4)
+y = data_4$song_popularity
+
+x.train=x[train,]
+y.train=y[train]
+x.test=x[test,]
+y.test=y[test]
+
+```
 
 
+#Cross Validation to choose the Best Tuning Parameter
+
+```{r}
+
+set.seed(1)
+cv.out.ridge=cv.glmnet(x.train, y.train, alpha = 0, nfolds = 5)
+
+plot(cv.out.ridge)
+abline(v = log(cv.out.ridge$lambda.min), col="red", lwd=3, lty=2)
+
+```
+
+```{r}
+
+bestlam = cv.out.ridge$lambda.min
+bestlam
+
+```
+
+```{r}
+
+lambda.list.ridge = 1000 * exp(seq(0, log(1e-5), length = 100))
+
+#lambda.list.ridge =  10^seq(10, -2, length = 100)
+
+ridge.mod=glmnet(x.train,y.train,alpha=0,lambda = lambda.list.ridge)
+
+
+```
+
+#The ridge testing MSE w/ best lamda
+```{r}
+
+ridge.pred=predict(ridge.mod,s=bestlam ,newx=x[test,])
+mean((ridge.pred-y.test)^2)
+
+```
+#The ridge training MSE w/ best lamda
+```{r}
+
+ridge.pred=predict(ridge.mod,s=bestlam ,newx=x[train,])
+mean((ridge.pred-y.train)^2)
+
+```
+
+#The coefficients
+```{r}
+
+out = glmnet(x, y, alpha = 0, lamda = lambda.list.ridge)
+predict(out,type="coefficients",s=bestlam)
+
+```
+
+#The Laso
+
+```{r}
+
+lasso.mod <- glmnet(x.train, y.train, alpha=1, lambda=lambda.list.ridge)
+plot(lasso.mod, xvar="lambda", label = TRUE)
+
+```
+
+```{r}
+
+set.seed(1)
+cv.out.lasso = cv.glmnet(x.train, y.train, alpha = 1)
+plot(cv.out.lasso)
+abline(v = log(cv.out.lasso$lambda.min), col="red", lwd=3, lty=2)
+
+
+
+```
+
+```{r}
+
+bestlam_laso = cv.out.lasso$lambda.min
+bestlam_laso
+
+```
+
+#The laso testing MSE w/ best lamda
+```{r}
+
+lasso.pred = predict(lasso.mod, s = bestlam_laso, newx = x[test,])
+mean((lasso.pred-y.test)^2)
+
+```
+#The laso training MSE w/ best lamda
+```{r}
+
+lasso.pred = predict(lasso.mod, s = bestlam_laso, newx = x[train,])
+mean((lasso.pred-y.train)^2)
+
+```
+#The Coefficient
+```{r}
+
+out=glmnet(x,y,alpha=1,lambda=lambda.list.ridge)
+lasso.coef=predict(out,type="coefficients",s=bestlam_laso)
+lasso.coef
+
+```
+
+None of the coefficients became zero, this means all the variables are associated with the response
 
 
