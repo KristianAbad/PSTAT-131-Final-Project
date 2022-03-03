@@ -97,6 +97,39 @@ nrow(music.train)
 nrow(music.test)
 ```
 
+# Single decision tree
+```{r}
+library(tree)
+```
+
+
+```{r}
+set.seed(131)
+tree.music <- tree(song_popularity ~ . , data_4, subset=train)
+summary(tree.music)
+```
+Plotting the tree
+```{r}
+plot(tree.music)
+text(tree.music, pretty = 0)
+```
+
+```{r}
+cv.music <- cv.tree(tree.music)
+plot(cv.music$size, cv.music$dev, type = "b")
+```
+```{r}
+prune.music <- prune.tree(tree.music, best = 2)
+plot(prune.music)
+text(prune.music, pretty = 0)
+```
+```{r}
+yhat.tree <- predict(tree.music, newdata = data_4[-train,])
+plot(yhat.tree, music.test$song_popularity)
+abline(0,1)
+mean((yhat.tree - music.test$song_popularity)^2)
+```
+
 # Random Forest
 \
 Here we're going to need the randomForest package.
@@ -200,6 +233,7 @@ mean((yhat.boost - music.test.Y)^2)
 ```
 
 ```{r}
+set.seed(131)
 boost.music2 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
                    distribution = "gaussian", 
                    n.trees=5000,
@@ -211,6 +245,7 @@ mean((yhat.boost2 - music.test.Y)^2)
 Hmmm it seems our MSE is increasing with the past 2 models, let's try tuning the shrinkage parameter and see if that helps. Here we'll try $\lambda = 0.001$
 
 ```{r}
+set.seed(131)
 boost.music3 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
                    distribution = "gaussian", 
                    n.trees=5000,
@@ -221,42 +256,61 @@ mean((yhat.boost3 - music.test.Y)^2)
 ```
 We got an improvement for the MSE that relative to the other boosted trees is big but is still high.
 
-# Bayesian Additive Trees
-
-```{r}
-library(BART)
-```
-Further splitting the 
-```{r}
-x.music.train <- music.train %>%
-  select(-song_popularity)
-y.music.train <- music.train %>%
-  select(song_popularity)
-x.music.test <- music.test %>%
-  select(-song_popularity)
-y.music.test <- music.test %>%
-  select(song_popularity)
-
-# x <- data_4[,c(1,3:15)]
-# y <- data_4[,"song_popularity"]
-# x.music.train <- x[train,]
-# y.music.train <- y[train,]
-# x.music.test <- x[-train,]
-# y.music.test <- y[-train,]
-
-#x.music.train
-#y.music.train
-#x.music.test
-#y.music.test
-
-
-```
-
 ```{r}
 set.seed(131)
-bartfit <- gbart(x.music.train, y.music.train, x.test = x.music.test)
-yhat.bart <- bartfit$yhat.test.mean
-mean((y.music.test - yhat.bart)^2)
+boost.music4 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
+                   distribution = "gaussian", 
+                   n.trees=15000,
+                   interaction.depth = 4,
+                   shrinkage = 0.001,
+                   verbose = F)
+yhat.boost4 <- predict(boost.music4 , newdata = data_4[-train,],n.trees = 15000)
+mean((yhat.boost4 - music.test.Y)^2)
+```
+We see that the the MSE is slightly getting lower with each addition of 5000 trees. Just for curiosity's sake, let's fit an absurd amount of trees:
+```{r}
+set.seed(131)
+boost.music5 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
+                   distribution = "gaussian", 
+                   n.trees=100000,
+                   interaction.depth = 4,
+                   shrinkage = 0.001,
+                   verbose = F)
+yhat.boost5 <- predict(boost.music5 , newdata = data_4[-train,],n.trees = 100000)
+mean((yhat.boost5 - music.test.Y)^2)
+```
+```{r}
+set.seed(131)
+boost.music6 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
+                   distribution = "gaussian", 
+                   n.trees=30000,
+                   interaction.depth = 4,
+                   shrinkage = 0.001,
+                   verbose = F)
+yhat.boost6 <- predict(boost.music6 , newdata = data_4[-train,],n.trees = 30000)
+mean((yhat.boost6 - music.test.Y)^2)
+```
+```{r}
+set.seed(131)
+boost.music7 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
+                   distribution = "gaussian", 
+                   n.trees=30000,
+                   interaction.depth = 6,
+                   shrinkage = 0.001,
+                   verbose = F)
+yhat.boost7 <- predict(boost.music7 , newdata = data_4[-train,],n.trees = 30000)
+mean((yhat.boost7 - music.test.Y)^2)
+```
+```{r}
+set.seed(131)
+boost.music8 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
+                   distribution = "gaussian", 
+                   n.trees=30000,
+                   interaction.depth = 8,
+                   shrinkage = 0.001,
+                   verbose = F)
+yhat.boost8 <- predict(boost.music8 , newdata = data_4[-train,],n.trees = 30000)
+mean((yhat.boost8 - music.test.Y)^2)
 ```
 
 
