@@ -139,7 +139,7 @@ library(randomForest)
 \
 Here we perform bagging :
 \
-```{r, cache=TRUE}
+```{r}
 set.seed(131)
 #Perform bagging
 bag.music <- randomForest(song_popularity ~ . , data = data_4, mtry=ncol(data_4) - 1,
@@ -147,7 +147,7 @@ bag.music <- randomForest(song_popularity ~ . , data = data_4, mtry=ncol(data_4)
 bag.music
 
 ```
-```{r, cache=TRUE}
+```{r}
 yhat.bag <- predict(bag.music , newdata = data_4[-train,])
 music.test.Y <- music.test$song_popularity
 plot(yhat.bag, music.test.Y)
@@ -157,7 +157,7 @@ mean((yhat.bag - music.test.Y)^2)
 MSE is pretty high for bagging.\
 
 Let's move on to random forests\
-```{r, cache=TRUE}
+```{r}
 set.seed(131)
 #Here we create a random forest where we let mtry = p/3 or 14/3
 rf.music <- randomForest(song_popularity ~ . , data = data_4,
@@ -165,14 +165,14 @@ rf.music <- randomForest(song_popularity ~ . , data = data_4,
 rf.music
 ```
 
-```{r,cache=TRUE}
+```{r}
 yhat.rf <- predict(rf.music , newdata = data_4[-train,])
 
 plot(yhat.rf, music.test.Y)
 abline (0, 1)
 mean((yhat.rf - music.test.Y)^2)
 ```
-```{r, cache=TRUE}
+```{r}
 set.seed(131)
 #Here we create a random forest where we let mtry = 6
 rf.music2 <- randomForest(song_popularity ~ . , mtry = 6,data = data_4,
@@ -180,7 +180,7 @@ rf.music2 <- randomForest(song_popularity ~ . , mtry = 6,data = data_4,
 rf.music2
 ```
 
-```{r, cache=TRUE}
+```{r}
 yhat.rf2 <- predict(rf.music2 , newdata = data_4[-train,])
 
 plot(yhat.rf2, music.test.Y)
@@ -190,10 +190,10 @@ mean((yhat.rf2 - music.test.Y)^2)
 
 With the MSE being more or less the same for bagging as it is in random forest, we will proceed to other methods.
 
-```{r, cache=TRUE}
+```{r}
 importance(rf.music)
 ```
-```{r, cache=TRUE}
+```{r}
 varImpPlot(bag.music)
 varImpPlot(rf.music)
 varImpPlot(rf.music2)
@@ -202,11 +202,11 @@ Based off these plots we see the MSE increase with certain variables compared to
 
 # Boosted trees
 
-```{r, cache=TRUE}
+```{r}
 library(gbm)
 ```
 
-```{r, cache=TRUE}
+```{r}
 set.seed(131)
 boost.music <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
                    distribution = "gaussian", 
@@ -214,25 +214,25 @@ boost.music <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
                    interaction.depth = 4)
 ```
 
-```{r, cache=TRUE}
+```{r}
 summary(boost.music)
 ```
 We see the most important variables according to the boosted model is loudness, tempo, and song duration in milliseconds. Let's take a look at the partial dependence for these 3 variables:
-```{r, cache=TRUE}
+```{r}
 plot(boost.music, i = 'loudness')
 plot(boost.music, i = 'tempo') 
 plot(boost.music, i = 'song_duration_ms')
 ```
 
 
-```{r, cache=TRUE}
+```{r}
 yhat.boost <- predict(boost.music , newdata = data_4[-train,],n.trees = 5000)
 plot(yhat.boost, music.test.Y)
 abline (0, 1)
 mean((yhat.boost - music.test.Y)^2)
 ```
 
-```{r, cache=TRUE}
+```{r}
 set.seed(131)
 boost.music2 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
                    distribution = "gaussian", 
@@ -244,7 +244,7 @@ mean((yhat.boost2 - music.test.Y)^2)
 ```
 Hmmm it seems our MSE is increasing with the past 2 models, let's try tuning the shrinkage parameter and see if that helps. Here we'll try $\lambda = 0.001$
 
-```{r, cache=TRUE}
+```{r}
 set.seed(131)
 boost.music3 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
                    distribution = "gaussian", 
@@ -256,7 +256,7 @@ mean((yhat.boost3 - music.test.Y)^2)
 ```
 We got an improvement for the MSE that relative to the other boosted trees is big but is still high.
 
-```{r, cache=TRUE}
+```{r}
 set.seed(131)
 boost.music4 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
                    distribution = "gaussian", 
@@ -267,8 +267,19 @@ boost.music4 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
 yhat.boost4 <- predict(boost.music4 , newdata = data_4[-train,],n.trees = 15000)
 mean((yhat.boost4 - music.test.Y)^2)
 ```
-We see that the the MSE is slightly getting lower with each addition of 5000 trees.
-```{r, cache=TRUE}
+We see that the the MSE is slightly getting lower with each addition of 5000 trees. Just for curiosity's sake, let's fit an absurd amount of trees:
+```{r}
+set.seed(131)
+boost.music5 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
+                   distribution = "gaussian", 
+                   n.trees=100000,
+                   interaction.depth = 4,
+                   shrinkage = 0.001,
+                   verbose = F)
+yhat.boost5 <- predict(boost.music5 , newdata = data_4[-train,],n.trees = 100000)
+mean((yhat.boost5 - music.test.Y)^2)
+```
+```{r}
 set.seed(131)
 boost.music6 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
                    distribution = "gaussian", 
@@ -279,7 +290,7 @@ boost.music6 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
 yhat.boost6 <- predict(boost.music6 , newdata = data_4[-train,],n.trees = 30000)
 mean((yhat.boost6 - music.test.Y)^2)
 ```
-```{r, cache=TRUE}
+```{r}
 set.seed(131)
 boost.music7 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
                    distribution = "gaussian", 
@@ -290,7 +301,7 @@ boost.music7 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
 yhat.boost7 <- predict(boost.music7 , newdata = data_4[-train,],n.trees = 30000)
 mean((yhat.boost7 - music.test.Y)^2)
 ```
-```{r, cache=TRUE}
+```{r}
 set.seed(131)
 boost.music8 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
                    distribution = "gaussian", 
