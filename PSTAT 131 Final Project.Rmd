@@ -148,16 +148,6 @@ data_4 <- data_3[!(grepl('Mix',data_3$song_name,fixed=TRUE) |
        grepl('Version',data_3$song_name,fixed=TRUE)),]
 data_4
 ```
-
-# Exploratory Data Analysis
-
-```{r}
-plot(music.train$danceability,music.train$song_popularity)
-plot(music.train$energy,music.train$song_popularity)
-plot(music.train$energy,music.train$danceability)
-```
-\
-When it comes to plotting song popularity against some of the other variables such as danceability and energy, there doesn't appear to be any immediate relationship but when it comes to plotting danceability versus energy, there appears to be some quadratic relationship among the variables.
 \
 # Train/Test Split
 
@@ -170,6 +160,16 @@ music.test = data_4[-train_1,]
 nrow(music.train)
 nrow(music.test)
 ```
+# Exploratory Data Analysis
+
+```{r}
+plot(music.train$danceability,music.train$song_popularity)
+plot(music.train$energy,music.train$song_popularity)
+plot(music.train$energy,music.train$danceability)
+```
+\
+When it comes to plotting song popularity against some of the other variables such as danceability and energy, there doesn't appear to be any immediate relationship but when it comes to plotting danceability versus energy, there appears to be some quadratic relationship among the variables.
+\
 
 #Linear Regression
 

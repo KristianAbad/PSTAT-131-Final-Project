@@ -1,6 +1,6 @@
 ---
 title: "Codebook"
-author: "Kristian Abad, Steven Truong, Nicole Magallanes"
+author: "Kristian Abad, Steven Truong"
 date: "2/17/2022"
 output: pdf_document
 ---
