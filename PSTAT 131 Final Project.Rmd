@@ -1,6 +1,6 @@
 ---
 title: "Song Data Project"
-author: "Kristian Abad, Steven Truong, Nicole Magallanes"
+author: "Kristian Abad & Steven Truong"
 date: "2/13/2022"
 output: pdf_document
 ---
@@ -8,6 +8,85 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+# Introduction
+
+The purpose of this project is to observe the relationship between the popularity of songs based on its characteristics and generate a model that will predict the song’s popularity based on given characteristics.
+
+# What Are The Characteristics Of Music?
+
+The characteristics of music are the audio features of a song. In our dataset, we were given numeric data for features such as the song’s duration, acousticness, danceability, energy, instrumentalness, key, liveliness, loudness, audio mode, speechiness, tempo, time signature, and audio valence. The combination of these audio features makes up what we hear. According to Spotify APIs, these features can be categorized in which aspect of a song that it can affect:
+
+- Mood: Danceability, Valence, Energy, Tempo
+- Properties: Loudness, Speechiness, Instrumentalness
+- Context: Liveness, Acousticness
+
+We were also given a descriptions and range of unit of each audio feature:
+
+- Duration: The duration of the track in milliseconds.
+
+- Acousticness: A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic.
+
+- Danceability: Describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat                  strength, and overall regularity. A value of 0.0 is least danceable and 1.0 is most danceable.
+
+- Energy: A measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically, energetic tracks feel fast,                   loud, and noisy. For example, death metal has high energy, while a Bach prelude scores low on the scale. Perceptual features                      contributing to this attribute include dynamic range, perceived loudness, timbre, onset rate, and general entropy.
+
+- Instrumentalness: Predicts whether a track contains no vocals. "Ooh" and "aah" sounds are treated as instrumental in this context. Rap or spoken                     word tracks are clearly "vocal". The closer the instrumentalness value is to 1.0, the greater likelihood the track contains no                     vocal content. Values above 0.5 are intended to represent instrumental tracks, but confidence is higher as the value                              approaches 1.0.
+
+- Key: The key the track is in. Integers map to pitches using standard Pitch Class notation. E.g. 0 = C, 1 = C♯/D♭, 2 = D, and so on. If no key         was detected, the value is -1.
+
+- Liveliness: Detects the presence of an audience in the recording. Higher liveness values represent an increased probability that the track was                performed live. A value above 0.8 provides strong likelihood that the track is live.
+
+- Loudness: The overall loudness of a track in decibels (dB). Loudness values are averaged across the entire track and are useful for comparing               relative loudness of tracks. Loudness is the quality of a sound that is the primary psychological correlate of physical strength                  (amplitude). Values typically range between -60 and 0 db.
+
+- Mode: Mode indicates the modality (major or minor) of a track, the type of scale from which its melodic content is derived. Major is represented         by 1 and minor is 0.
+
+- Speechiness: Detects the presence of spoken words in a track. The more exclusively speech-like the recording (e.g. talk show, audio book,                      poetry), the closer to 1.0 the attribute value. Values above 0.66 describe tracks that are probably made entirely of spoken words.                Values between 0.33 and 0.66 describe tracks that may contain both music and speech, either in sections or layered, including such                cases as rap music. Values below 0.33 most likely represent music and other non-speech-like tracks.
+
+- Tempo: The overall estimated tempo of a track in beats per minute (BPM). In musical terminology, tempo is the speed or pace of a given piece and          derives directly from the average beat duration.
+
+- Time Signature: An estimated time signature. The time signature (meter) is a notational convention to specify how many beats are in each bar (or                   measure). The time signature ranges from 3 to 7 indicating time signatures of "3/4", to "7/4".
+
+- Valence: A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track. Tracks with high valence sound more positive (e.g.             happy, cheerful, euphoric), while tracks with low valence sound more negative (e.g. sad, depressed, angry).
+
+
+In addition to the audio feature, the dataset also provided the name of songs and how it ranked in popularity from a range of 0 to 100 (where 0 is the lowest popularity and 100 is the highest popularity).
+
+
+# Why Might The Model Be Useful?
+
+It is in the interest of music artists and companies to produce songs that will rank high in popularity and top the charts. By having some knowledge of what music listeners generally enjoy, artists will be able to incorporate more of what people want and this will lead to a higher success of the song.
+
+
+# Loading Data and Packages
+
+This project uses data from Kaggle.com and the Spotify API. The data set contains about 13070 songs title, popularity score, audio features.
+
+```{r}
+
+library(readr)
+library(tidyr)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(class)
+library(FNN)
+
+data = read_csv("song_data.csv")
+
+```
+
+
+# Data Cleaning
+
+
+
+
+
+
+
+
+
 
 ```{r}
 library(readr)
@@ -95,12 +174,6 @@ music.test = data_4[-train,]
 
 nrow(music.train)
 nrow(music.test)
-```
-```{r}
-plot(music.train$danceability,music.train$song_popularity)
-```
-```{r}
-plot(music.train$energy,music.train$song_popularity)
 ```
 
 #EDA
