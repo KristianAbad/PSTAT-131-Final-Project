@@ -2,7 +2,9 @@
 title: "Song Data Project"
 author: "Kristian Abad, Steven Truong"
 date: "2/13/2022"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -38,12 +40,15 @@ I think the duplicated() function finds exact duplicates of rows.
 duplicates <- data[duplicated(data),]
 duplicates
 ```
+
+\
 Just testing some cases here...while scrolling through on kaggle, I just picked a random duplicate song to test
 ```{r}
 
 duplicates %>%
   filter(song_name == 'Zombie')
 ```
+\
 Here's an interesting case where we have 2 of the same rows and 1 with a remix with a track called "8 Letters"
 ```{r}
 duplicates %>%
@@ -52,6 +57,7 @@ duplicates %>%
 duplicates %>%
   filter(song_name == '8 Letters - R3HAB Remix')
 ```
+\
 So it looks like it just picks up exact duplicates and we'll need to figure out what we're going to do with other cases.
 ```{r}
 data_2 <- data[!duplicated(data),]
@@ -60,6 +66,7 @@ nrow(data_2)
 
 nrow(data) - nrow(data_2)
 ```
+\
 Using the grepl function to find any instance of single,remastered, and radio edit/mix versions of tracks. 
 ```{r}
 #Function was found via stackoverflow
@@ -69,6 +76,7 @@ data_3 <- data_2[!(grepl('Single',data_2$song_name,fixed=TRUE) |
                  grepl('Radio',data_2$song_name,fixed=TRUE)),]
 data_3
 ```
+\
 Checking for missing values
 ```{r}
 data_3[is.na(data_3)]
@@ -108,16 +116,22 @@ set.seed(131)
 tree.music <- tree(song_popularity ~ . , data_4, subset=train)
 summary(tree.music)
 ```
+\
 Plotting the tree
 ```{r}
 plot(tree.music)
 text(tree.music, pretty = 0)
 ```
+\
 Here we can see that the single tree does a split specifically on the instrumentalness of a track and assigns a weight based off the range of being less than or greater than 0.000009595. We'll try to improve performance of this tree by pruning the tree below:\
-```{r}
+```{r, warning=FALSE}
 cv.music <- cv.tree(tree.music)
+```
+
+```{r}
 plot(cv.music$size, cv.music$dev, type = "b")
 ```
+\
 Based off the above graph we see that the best size of the tree that gives the lowest cross-validation test error rate is 2 and so we'll keep the tree with this size. Now let's evaluate how this tree performs by calculating the test MSE.\
 
 ```{r}
@@ -151,6 +165,7 @@ plot(yhat.bag, music.test.Y)
 abline (0, 1)
 mean((yhat.bag - music.test.Y)^2)
 ```
+\
 Based off the graph, it looks like we our bagged model is underestimating by about a popularity score of around 20 which matches our test MSE which is still pretty high for bagging.\
 
 Let's move on to random forests\
@@ -169,6 +184,7 @@ plot(yhat.rf, music.test.Y)
 abline (0, 1)
 mean((yhat.rf - music.test.Y)^2)
 ```
+\
 Checking the test set vs our predictions as we did with bagging and we still get a cluster of data points around the same area and so similar MSE. Here we tweak the number of variables for the random forest model to choose from in the splits\
 ```{r}
 set.seed(131)
@@ -186,6 +202,7 @@ abline (0, 1)
 mean((yhat.rf2 - music.test.Y)^2)
 ```
 
+\
 With the MSE being more or less the same for bagging as it is in random forest, we will proceed to other methods.
 
 ```{r}
@@ -196,6 +213,7 @@ varImpPlot(bag.music)
 varImpPlot(rf.music)
 varImpPlot(rf.music2)
 ```
+\
 Based off these plots we see the MSE increase with certain variables compared to others, namely, energy, instrumentalness, loudness, acousticness, audio_valence, and danceability. Both the bagging and random forest models share similar significant variables in the percent increase in mse such as instrumentalness, energy, and loudness.\
 
 # Boosted trees
@@ -203,6 +221,7 @@ Based off these plots we see the MSE increase with certain variables compared to
 ```{r}
 library(gbm)
 ```
+\
 Here we build the first boosted tree model with a default shrinkage term of 0.1 to start off this section.\
 ```{r}
 set.seed(131)
@@ -215,12 +234,14 @@ boost.music <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
 ```{r}
 summary(boost.music)
 ```
+\
 We see the most important variables according to the boosted model is loudness, tempo, and song duration in milliseconds. Let's take a look at the partial dependence for these 3 variables:
 ```{r}
 plot(boost.music, i = 'loudness')
 plot(boost.music, i = 'tempo') 
 plot(boost.music, i = 'song_duration_ms')
 ```
+\
 There doesn't appear to be a general pattern or trend integrating the other variables out for loudness, tempo, and song duration. It mostly looks like a lot of oscillations or noise but we see a little bit of an upward trend but not much for loudness.\
 
 ```{r}
@@ -229,6 +250,7 @@ plot(yhat.boost, music.test.Y)
 abline (0, 1)
 mean((yhat.boost - music.test.Y)^2)
 ```
+\
 Let's build another boosted tree model and tweak the shrinkage term a little bit.\
 ```{r}
 set.seed(131)
@@ -240,6 +262,7 @@ boost.music2 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
 yhat.boost2 <- predict(boost.music2 , newdata = data_4[-train,],n.trees = 5000)
 mean((yhat.boost2 - music.test.Y)^2)
 ```
+\
 Hmmm it seems our MSE is increasing with the past 2 models, let's try tuning the shrinkage parameter and see if that helps. Here we'll try $\lambda = 0.001$
 
 ```{r}
@@ -252,6 +275,7 @@ boost.music3 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
 yhat.boost3 <- predict(boost.music3 , newdata = data_4[-train,],n.trees = 5000)
 mean((yhat.boost3 - music.test.Y)^2)
 ```
+\
 We got an improvement for the MSE that relative to the other boosted trees is big but is still high.
 
 ```{r}
@@ -265,6 +289,7 @@ boost.music4 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
 yhat.boost4 <- predict(boost.music4 , newdata = data_4[-train,],n.trees = 15000)
 mean((yhat.boost4 - music.test.Y)^2)
 ```
+\
 We see that the the MSE is slightly getting lower with each addition of 5000 trees.
 ```{r}
 set.seed(131)
@@ -277,6 +302,7 @@ boost.music6 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
 yhat.boost6 <- predict(boost.music6 , newdata = data_4[-train,],n.trees = 30000)
 mean((yhat.boost6 - music.test.Y)^2)
 ```
+\
 This is about as good a test MSE we can get. Now let's tune the interaction depth or the number of splits from a single node.
 ```{r}
 set.seed(131)
@@ -300,6 +326,7 @@ boost.music8 <- gbm(song_popularity ~ . - song_name, data=data_4[train,],
 yhat.boost8 <- predict(boost.music8 , newdata = data_4[-train,],n.trees = 30000)
 mean((yhat.boost8 - music.test.Y)^2)
 ```
+\
 Increasing interaction depth seems to make our test MSE slightly bigger so we'll stick with boost.music6 being our best model for this section. Let's see what variables are of importance and the marginal dependence of those variables are:\
 
 ```{r}
@@ -309,6 +336,7 @@ summary(boost.music6)
 plot(boost.music6, i = 'loudness')
 plot(boost.music6, i = 'liveness')
 ```
+\
 Viewing these plots, there isn't too much of a relationship on the response as we see with the oscillation and again we see a more pronounced upward trend with respect to the loudness variable and looks similar to our first boosted model. Other than that, liveness doesn't seems to capture a general trend or pattern in the data relative to the response which sort of goes on to explain our average error of about 20.
 
 
