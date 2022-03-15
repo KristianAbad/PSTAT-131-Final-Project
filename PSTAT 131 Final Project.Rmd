@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE,message = FALSE)
 ```
 
 # Introduction
@@ -148,17 +148,18 @@ data_4 <- data_3[!(grepl('Mix',data_3$song_name,fixed=TRUE) |
        grepl('Version',data_3$song_name,fixed=TRUE)),]
 data_4
 ```
-\
+
 # Train/Test Split
 
+Here we do a 80% random split for the training set and save the remaining 20% for the test 20%.\
 ```{r}
 set.seed(131)
 train_1 = sample(1:nrow(data_4), 11240)
 music.train = data_4[train_1,]
 music.test = data_4[-train_1,]
 
-nrow(music.train)
-nrow(music.test)
+cat('Rows in training set:',nrow(music.train),'\n')
+cat('Rows in test set: ',nrow(music.test),'\n')
 ```
 # Exploratory Data Analysis
 
@@ -171,7 +172,7 @@ plot(music.train$energy,music.train$danceability)
 When it comes to plotting song popularity against some of the other variables such as danceability and energy, there doesn't appear to be any immediate relationship but when it comes to plotting danceability versus energy, there appears to be some quadratic relationship among the variables.
 \
 
-#Linear Regression
+# Linear Regression
 
 We decided to make a histogram graph of the Popularity of our songs to observe where most of the songs were ranked in term of Popularity
 
@@ -578,8 +579,9 @@ plot(yhat.tree, music.test$song_popularity)
 abline(0,1)
 mean((yhat.tree - music.test$song_popularity)^2)
 ```
+Here we see 2 values from our single tree predictions where the data points lie for each value in the test set so it's consistent with the 2 nodes from our tree. Let's see if we can improve model performance with another model, bagging and then we'll move onto random forests!\
 
-# Random Forest
+# Bagging/Random Forest
 \
 Here we're going to try building a random forest model but first we need the randomForest package.
 ```{r}
@@ -600,12 +602,11 @@ yhat.bag <- predict(bag.music , newdata = data_4[-train_1,])
 music.test.Y <- music.test$song_popularity
 plot(yhat.bag, music.test.Y)
 abline (0, 1)
-mean((yhat.bag - music.test.Y)^2)
+cat('MSE:',mean((yhat.bag - music.test.Y)^2))
 ```
 \
-Based off the graph, it looks like we our bagged model is underestimating by about a popularity score of around 20 which matches our test MSE which is still pretty high for bagging.\
+Based off the graph, it looks like we our bagged model is underestimating by about a popularity score of around 20 which matches our test MSE which is still pretty high for bagging. Still we see a 4% increase in performance compared to our single tree model. Let's keep tuning our model with the number of predictors to use with random forests by starting with the a third or the default amount set for the randomForest function.\
 
-Let's move on to random forests\
 ```{r}
 set.seed(131)
 #Here we create a random forest where we let mtry = p/3 or 14/3 or the default value
@@ -618,7 +619,7 @@ rf.music
 yhat.rf <- predict(rf.music , newdata = data_4[-train_1,])
 plot(yhat.rf, music.test.Y)
 abline (0, 1)
-mean((yhat.rf - music.test.Y)^2)
+cat('MSE:',mean((yhat.rf - music.test.Y)^2))
 ```
 \
 Checking the test set vs our predictions as we did with bagging and we still get a cluster of data points around the same area and so similar MSE. Here we tweak the number of variables for the random forest model to choose from in the splits\
@@ -634,11 +635,11 @@ rf.music2
 yhat.rf2 <- predict(rf.music2 , newdata = data_4[-train_1,])
 plot(yhat.rf2, music.test.Y)
 abline (0, 1)
-mean((yhat.rf2 - music.test.Y)^2)
+cat('MSE:',mean((yhat.rf2 - music.test.Y)^2))
 ```
 
 \
-With the MSE being more or less the same for bagging as it is in random forest, we will proceed to other methods.
+With the MSE being more or less the same for bagging as it is in random forest, we will look to other methods but let's analyze some of the predictors used in the model such as the increase in MSE for each variable.\
 
 ```{r}
 importance(rf.music)
@@ -649,7 +650,7 @@ varImpPlot(rf.music)
 varImpPlot(rf.music2)
 ```
 \
-Based off these plots we see the MSE increase with certain variables compared to others, namely, energy, instrumentalness, loudness, acousticness, audio_valence, and danceability. Both the bagging and random forest models share similar significant variables in the percent increase in mse such as instrumentalness, energy, and loudness.\
+Based off these plots we see the MSE increase with certain variables compared to others, namely, energy, instrumentalness, loudness, acousticness, audio_valence, and danceability. Both the bagging and random forest models share similar significant variables in the percent increase in mse such as instrumentalness, energy, and loudness. The node purity tells us how much a split with that variable reduces MSE and it looks like there the bagged and random forest model have similar variables namelly loudness, song duration, valence, and acousticness.\
 
 # Boosted trees
 
@@ -677,13 +678,13 @@ plot(boost.music, i = 'tempo')
 plot(boost.music, i = 'song_duration_ms')
 ```
 \
-There doesn't appear to be a general pattern or trend integrating the other variables out for loudness, tempo, and song duration. It mostly looks like a lot of oscillations or noise but we see a little bit of an upward trend but not much for loudness.\
+These plots are the respective variables in relation to the response, song popularity, with all other variables factored out. There doesn't appear to be a general pattern or trend integrating the other variables out for loudness, tempo, and song duration. It mostly looks like a lot of oscillations or noise but we see a little bit of an upward trend but not much for loudness.\
 
 ```{r}
 yhat.boost <- predict(boost.music , newdata = data_4[-train_1,],n.trees = 5000)
 plot(yhat.boost, music.test.Y)
 abline (0, 1)
-mean((yhat.boost - music.test.Y)^2)
+cat('MSE:',mean((yhat.boost - music.test.Y)^2))
 ```
 \
 Let's build another boosted tree model and tweak the shrinkage term a little bit.\
@@ -695,7 +696,7 @@ boost.music2 <- gbm(song_popularity ~ . - song_name, data=data_4[train_1,],
                    interaction.depth = 4,
                    shrinkage = 0.2, verbose = F)
 yhat.boost2 <- predict(boost.music2 , newdata = data_4[-train_1,],n.trees = 5000)
-mean((yhat.boost2 - music.test.Y)^2)
+cat('MSE:',mean((yhat.boost2 - music.test.Y)^2))
 ```
 \
 Hmmm it seems our MSE is increasing with the past 2 models, let's try tuning the shrinkage parameter and see if that helps. Here we'll try $\lambda = 0.001$
@@ -708,10 +709,10 @@ boost.music3 <- gbm(song_popularity ~ . - song_name, data=data_4[train_1,],
                    interaction.depth = 4,
                    shrinkage = 0.001, verbose = F)
 yhat.boost3 <- predict(boost.music3 , newdata = data_4[-train_1,],n.trees = 5000)
-mean((yhat.boost3 - music.test.Y)^2)
+cat('MSE:',mean((yhat.boost3 - music.test.Y)^2))
 ```
 \
-We got an improvement for the MSE that relative to the other boosted trees is big but is still high.
+We got an improvement for the MSE that relative to the other boosted trees is big but is still high. Let's increase the number of trees to 15,000.\
 
 ```{r}
 set.seed(131)
@@ -722,7 +723,7 @@ boost.music4 <- gbm(song_popularity ~ . - song_name, data=data_4[train_1,],
                    shrinkage = 0.001,
                    verbose = F)
 yhat.boost4 <- predict(boost.music4 , newdata = data_4[-train_1,],n.trees = 15000)
-mean((yhat.boost4 - music.test.Y)^2)
+cat('MSE:',mean((yhat.boost4 - music.test.Y)^2))
 ```
 \
 We see that the the MSE is slightly getting lower with each addition of 5000 trees.
@@ -735,10 +736,10 @@ boost.music6 <- gbm(song_popularity ~ . - song_name, data=data_4[train_1,],
                    shrinkage = 0.001,
                    verbose = F)
 yhat.boost6 <- predict(boost.music6 , newdata = data_4[-train_1,],n.trees = 30000)
-mean((yhat.boost6 - music.test.Y)^2)
+cat('MSE:',mean((yhat.boost6 - music.test.Y)^2))
 ```
 \
-This is about as good a test MSE we can get. Now let's tune the interaction depth or the number of splits from a single node.
+This is about as good a test MSE we can get. Now let's tune the interaction depth or the number of splits from a single node and see if there's any performance improvements since the default is 1.
 ```{r}
 set.seed(131)
 boost.music7 <- gbm(song_popularity ~ . - song_name, data=data_4[train_1,],
@@ -748,7 +749,7 @@ boost.music7 <- gbm(song_popularity ~ . - song_name, data=data_4[train_1,],
                    shrinkage = 0.001,
                    verbose = F)
 yhat.boost7 <- predict(boost.music7 , newdata = data_4[-train_1,],n.trees = 30000)
-mean((yhat.boost7 - music.test.Y)^2)
+cat('MSE:',mean((yhat.boost7 - music.test.Y)^2))
 ```
 ```{r}
 set.seed(131)
@@ -759,7 +760,7 @@ boost.music8 <- gbm(song_popularity ~ . - song_name, data=data_4[train_1,],
                    shrinkage = 0.001,
                    verbose = F)
 yhat.boost8 <- predict(boost.music8 , newdata = data_4[-train_1,],n.trees = 30000)
-mean((yhat.boost8 - music.test.Y)^2)
+cat('MSE:',mean((yhat.boost8 - music.test.Y)^2))
 ```
 \
 Increasing interaction depth seems to make our test MSE slightly bigger so we'll stick with boost.music6 being our best model for this section. Let's see what variables are of importance and the marginal dependence of those variables are:\
