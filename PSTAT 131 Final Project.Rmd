@@ -64,7 +64,7 @@ It is in the interest of music artists and companies to produce songs that will 
 
 This project uses data from Kaggle.com and the Spotify API. The data set contains about 13070 songs title, popularity score, audio features.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 
 library(readr)
 library(tidyr)
@@ -196,62 +196,7 @@ Since we do not have any categorical value, we have to observed each features in
 - Influential cases (outlier): evaluated by the Residuals vs Leverage (want horizontal line to follow assumption)
 
 
-```{r}
-plot(music.train$acousticness, music.train$song_popularity)
-mod_acc = lm(music.train$song_popularity~music.train$acousticness) 
-summary(mod_acc)
-plot(mod_acc)
-```
-
-```{r}
-plot(music.train$danceability, music.train$song_popularity)
-mod_dance = lm(music.train$song_popularity~music.train$danceability)
-summary(mod_dance)
-plot(mod_dance)
-```
-```{r}
-plot(music.train$energy, music.train$song_popularity)
-mod_energy = lm(music.train$song_popularity~music.train$energy)
-summary(mod_energy)
-plot(mod_energy)
-```
-```{r}
-plot(music.train$instrumentalness, music.train$song_popularity)
-mod_instr = lm(music.train$song_popularity~music.train$instrumentalness)
-summary(mod_instr)
-plot(mod_instr)
-```
-```{r}
-plot(music.train$key, music.train$song_popularity)
-mod_key = lm(music.train$song_popularity~music.train$key)
-summary(mod_key)
-plot(mod_key)
-```
-```{r}
-plot(music.train$liveness, music.train$song_popularity)
-mod_liveness = lm(music.train$song_popularity~music.train$liveness)
-summary(mod_liveness)
-plot(mod_liveness)
-```
-```{r}
-plot(music.train$loudness, music.train$song_popularity)
-mod_loud = lm(music.train$song_popularity ~ music.train$loudness)
-summary(mod_loud)
-plot(mod_loud)
-```
-```{r}
-plot(music.train$speechiness, music.train$song_popularity)
-mod_speech = lm(music.train$song_popularity~music.train$speechiness)
-summary(mod_speech)
-plot(mod_speech)
-```
-```{r}
-plot(music.train$tempo, music.train$song_popularity)
-mod_tempo = lm(music.train$song_popularity~music.train$tempo)
-summary(mod_tempo)
-plot(mod_tempo)
-```
-From the diagnostic test, we see that most of the predictors generally follow the assumption of linearity, normality, homoscedasticity, and influential cases.Since we also built a linear model for each individual audio feature compared to the song popularity. If we were to look at the p-value of 0.05 significant level then we see that speech, key, and energy is not significant to affect the song popularity if we cannot reject null hypothesis. Now, we will built a linear model with all the significant characteristics to see if the significant of the features changes when combined with other audio features.
+From the diagnostic test, we observed that most of the predictors generally follow the assumption of linearity, normality, homoscedasticity, and influential cases. Since we also built a linear model for each individual audio feature compared to the song popularity. If we were to look at the p-value of 0.05 significant level then we see that speech, key, and energy is not significant to affect the song popularity if we cannot reject null hypothesis. Now, we will built a linear model with all the significant characteristics to see if the significant of the features changes when combined with other audio features.
 
 ```{r}
 mod_all = lm(music.train$song_popularity ~ music.train$acousticness + music.train$danceability + music.train$instrumentalness + music.train$liveness + music.train$loudness + music.train$tempo + music.train$energy + music.train$key + music.train$speechiness)
@@ -274,7 +219,7 @@ Popularity = 61.278308 + -3.052667*acousticness + 3.706776*danceability + -6.152
 From this model, we see that danceability and the y intercept is the only positive numbers that increase the value of popularity. However, we see from the data set that loudness is measured in a negative values, so it also technically a positive number that would increased the value of popularity. For the other predictors, if the value is too high, then it would decrease the value of popularity.
 
 
-However, we noticed that our R-squared and adjusted squared value is relatively low, which might indicate that our independent variable is not explaining much in variation of our dependent variable. The model also have a high value of AIC (99494.58) and BIC (99560.52)
+However, we noticed that our R-squared and adjusted squared value is relatively low, which might indicate that our independent variable is not explaining much in variation of our dependent variable. The Akaike Information Criterion (AIC) is a mathematical method that evaluates how well a model fits the data it was generated from. This AIC is beneficial in comparing different possible models and determine which is best fit for the data, so lower AIC is better. The Baysian Information Criteria (BIC) estimate the likelihood of a model to predict and so lower value would be better. However, our model have extremely high value AIC = 99494.58 and BIC = 99560.52, which mean our model is not fit for the data.
 
 ```{r}
 mse = mean(FinalLinearMod$residuals^2)
@@ -413,7 +358,7 @@ mean((lasso.pred-y.train)^2)
 ```
 The laso training MSE with best lamda is 408.6969
 
-We see that the testing and training mse is similar to what we got in the linear regression and and ridge regression. We will not check the coefficient to see if whether any of them became zero.
+We see that the testing and training mse is similar to what we got in the linear regression and and ridge regression. We will now check the coefficient to see if whether any of them became zero. The coefficient that becomes 0 means that it have no/less assocaition to the resposne.
 
 The Coefficient
 ```{r}
@@ -425,84 +370,6 @@ lasso.coef
 None of the coefficients became zero, this means all the variables are associated with the response. However, we see that coefficient for key is extremely small. 
 
 
-# K-Nearest Neighbor Classification
-
-Since we do not have any categorical data, we decided to create a new binary variable in our data set. We will considered any song's that have a greater popularity score than the median of song's popularity as high popularity and the rest as low popularity.
-
-```{r}
-Popularity = data_4 %>%
-  mutate(High = as.factor(ifelse(song_popularity <= median(song_popularity), "Low", "High"))) %>%
-  select(-song_name)
-```
-
-
-Splitting data
-```{r}
-set.seed(222)
-train_k = sample(1:nrow(Popularity), nrow(Popularity)/2)
-Popularity.train = Popularity[train_k,]
-Popularity.test = Popularity[-train_k,]
-y.train_k = Popularity.train$High
-x.train_k = Popularity.train %>% select(-High) %>% scale(center = TRUE, scale = TRUE)
-y.test_k = Popularity.test$High
-x.test_k = Popularity.test %>% select(-High) %>% scale(center = TRUE, scale = TRUE)
-```
-
-
-Finding the best k value for knn
-
-We will tune our parameter by finding the best k (number of nearest neigbors considered) out of 100
-
-```{r}
-allK = 1:100
-validation.error = rep(NA, 100)
-set.seed(66)
-for (i in allK){
-  
-  pred.Yval = knn.cv(train = x.train_k, cl = y.train_k, k = i)
-  
-  validation.error[i] = mean(pred.Yval != y.train_k)
-  
-}
-numneighbor = max(allK[validation.error == min(validation.error)])
-numneighbor
-```
-
-The best k value from 1 to 100 is 47
-
-
-Calculate training error rate
-
-```{r}
-set.seed(444)
-pred.y.train_k = knn(train = x.train_k, test = x.train_k, cl = y.train_k, k = numneighbor)
-conf.train = table(predicted = pred.y.train_k, true = y.train_k)
-conf.train
-```
-
-```{r}
-1 - sum(diag(conf.train)/sum(conf.train))
-```
-The training error rate is 0.08754448
-
-
-Calculate test error rate
-
-```{r}
-set.seed(555)
-pred.y.test_k = knn(train = x.train_k, test = x.test_k, cl = y.train_k, k = numneighbor)
-conf.test = table(predicted = pred.y.test_k, true = y.test_k)
-conf.test
-```
-
-```{r}
-1 - sum(diag(conf.test)/sum(conf.test))
-```
-The test error rate is 0.1086121
-
-In this process, we found the best k value that would give a relatively lower training and test error rate. Now we will use the k value we found the find the mse in knn regression.
-
-
 # k-Nearest Neighbors regression
 
 
@@ -512,7 +379,7 @@ Training/Testing split
 Popularity_reg = data_4 %>%
   select(song_popularity, song_duration_ms, acousticness, danceability, energy, instrumentalness, liveness, loudness, speechiness, tempo,      audio_valence)
 set.seed(123)
-train = sample(1:nrow(Popularity_reg), nrow(Popularity_reg)/2)
+train = sample(1:nrow(Popularity_reg), 11240)
 train.kreg = Popularity_reg[train,]
 test.kreg = Popularity_reg[-train,]
 y.train_kreg = train.kreg$song_popularity
@@ -521,12 +388,14 @@ y.test_kreg = test.kreg$song_popularity
 x.test_kreg = test.kreg %>% select(-song_popularity) %>% scale(center = TRUE, scale = TRUE)
 ```
 
+We performed cross-validation that in a range of 1 to 100 and found that 47 is the best k value that would offer the lowest MSE. Hence, we will now proceed to find the training and testing MSE of the k-Nearest Neighbors regression.
+
 
 Training MSE
 
 ```{r}
 set.seed(12)
-pred.y.train_kreg = knn.reg(train = x.train_kreg, test = x.train_kreg, y = y.train_kreg, k = numneighbor)
+pred.y.train_kreg = knn.reg(train = x.train_kreg, test = x.train_kreg, y = y.train_kreg, k = 47)
 mean((pred.y.train_kreg$pred - y.train_kreg)^2)
 ```
 The training MSE for knn regression is 390.5383
@@ -536,7 +405,7 @@ Testing MSE
 
 ```{r}
 set.seed(13)
-pred.y.test_kreg = knn.reg(train = x.train_kreg, test = x.test_kreg, y = y.train_kreg, k = numneighbor)
+pred.y.test_kreg = knn.reg(train = x.train_kreg, test = x.test_kreg, y = y.train_kreg, k = 47)
 mean((pred.y.test_kreg$pred - y.test_kreg)^2)
 ```
 The testing MSE for knn regression is 400.0915
